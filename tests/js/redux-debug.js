@@ -76,13 +76,18 @@ export function setupReduxLogger() {
  * @since 1.141.0
  *
  * @param {...Function} middlewares Middleware functions to apply.
+ * @param {Object} options Optional settings: { name: string }.
  */
-export function setupReduxWithMiddleware( ...middlewares ) {
-	global.__REDUX_DEVTOOLS_EXTENSION__ = ( { name } ) => {
-		const nameAwareMiddlewares = middlewares.map(
-			( middleware ) => ( middlewareAPI ) =>
-				middleware( { ...middlewareAPI, name } )
-		);
-		return applyMiddleware( ...nameAwareMiddlewares );
-	};
+export function setupReduxWithMiddleware(...middlewares) {
+  // Wrap in try-catch to avoid breaking if DevTools not installed
+  try {
+    global.__REDUX_DEVTOOLS_EXTENSION__ = ({ name = 'store' } = {}) => {
+      const nameAwareMiddlewares = middlewares.map(
+        (middleware) => (middlewareAPI) => middleware({ ...middlewareAPI, name })
+      );
+      return applyMiddleware(...nameAwareMiddlewares);
+    };
+  } catch (err) {
+    console.warn('Redux DevTools setup skipped:', err);
+  }
 }
